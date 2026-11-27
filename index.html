@@ -938,7 +938,27 @@ function loadVoice() {
   NR.voice = best;
 }
 if (HASTTS) { loadVoice(); speechSynthesis.onvoiceschanged = loadVoice; }
-document.addEventListener('pointerdown', () => { if (!HASTTS) return; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) { } }, { once: true });
+// Desbloqueo: los móviles solo dejan hablar después de un gesto del usuario. Se reintenta en cada toque hasta lograrlo.
+function unlockVoice() {
+  if (!HASTTS || NR.unlocked) return;
+  try { const u = new SpeechSynthesisUtterance('.'); u.volume = 0; u.lang = 'es-MX'; u.onstart = () => { NR.unlocked = true; }; NR.ku = u; speechSynthesis.resume(); speechSynthesis.speak(u); } catch (e) { }
+  try { const a = NR.au || (NR.au = new Audio()); a.muted = true; a.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='; const p = a.play(); if (p && p.catch) p.catch(() => { }); a.muted = false; } catch (e) { }
+}
+['pointerdown', 'touchend', 'click'].forEach(ev => document.addEventListener(ev, unlockVoice, { passive: true }));
+// Respaldo cuando el teléfono no tiene voz en español: audio web en trozos
+function nweb(h, fin) {
+  const parts = []; let cur = '';
+  h.text.split(/(?<=[.!?])\s+/).forEach(s => { if ((cur + ' ' + s).length > 180) { if (cur) parts.push(cur); cur = s; } else cur = (cur ? cur + ' ' : '') + s; });
+  if (cur) parts.push(cur);
+  const a = NR.au || (NR.au = new Audio()); let i = 0;
+  const next = () => {
+    if (NR.cur !== h) return; if (i >= parts.length) return setTimeout(fin, 200);
+    a.onended = next; a.onerror = () => setTimeout(fin, 200);
+    a.src = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=es&q=' + encodeURIComponent(parts[i++]);
+    const p = a.play(); if (p && p.catch) p.catch(() => setTimeout(fin, 200));
+  };
+  next();
+}
 
 // --- cola de narración ---
 function nsay(text, pr, delay, lab) {
@@ -963,9 +983,17 @@ function nplay(h) {
   if (voice) {
     const u = new SpeechSynthesisUtterance(h.text), big = h.pr >= 3;
     u.lang = NR.voice ? NR.voice.lang : 'es-MX'; if (NR.voice) u.voice = NR.voice; u.rate = big ? 1.12 : 1.06; u.pitch = big ? 1.25 : 1.12; u.volume = 1;
-    u.onend = u.onerror = () => setTimeout(fin, 200);
-    setTimeout(() => { if (NR.cur === h) { try { speechSynthesis.speak(u); } catch (e) { } } }, 60);
-    NR.fb = setTimeout(fin, L * 110 + 4000);
+    NR.u = u; let started = false, web = false; // se guarda la referencia (si no, Chrome móvil la descarta y calla)
+    const toWeb = () => { if (web || NR.cur !== h) return; web = true; try { speechSynthesis.cancel(); } catch (e) { } nweb(h, fin); };
+    u.onstart = () => { started = true; };
+    u.onend = () => { if (!web) setTimeout(fin, 200); };
+    u.onerror = () => { if (!started) toWeb(); else setTimeout(fin, 200); };
+    setTimeout(() => {
+      if (NR.cur !== h) return;
+      try { if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(u); } catch (e) { toWeb(); }
+    }, 80);
+    setTimeout(() => { if (!started) toWeb(); }, 2200); // si el teléfono no empezó a hablar, usa el respaldo
+    NR.fb = setTimeout(fin, L * 110 + 6000);
   } else NR.fb = setTimeout(fin, L * 55 + 2200);
 }
 setInterval(() => {
@@ -980,6 +1008,9 @@ $('narrBtn').onclick = () => {
   const modes = HASTTS ? ['voice', 'text', 'off'] : ['text', 'off'];
   NR.mode = modes[(modes.indexOf(NR.mode) + 1) % modes.length]; localStorage.narr = NR.mode;
   $('narrBtn').textContent = NICON[NR.mode]; toast(NTXT[NR.mode]);
+  if (NR.mode === 'voice' && HASTTS) { // se habla dentro del toque: así el móvil lo permite
+    try { speechSynthesis.cancel(); speechSynthesis.resume(); const u = new SpeechSynthesisUtterance('¡Narrador listo!'); u.lang = NR.voice ? NR.voice.lang : 'es-MX'; if (NR.voice) u.voice = NR.voice; NR.tu = u; speechSynthesis.speak(u); } catch (e) { }
+  }
   if (NR.mode === 'off') { NR.q = []; nstop(); $('narr').classList.remove('show'); }
   else if (HASTTS && NR.mode === 'text') { try { speechSynthesis.cancel(); } catch (e) { } }
 };
