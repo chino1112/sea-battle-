@@ -81,7 +81,7 @@ hr{border:0;border-top:3px dashed #0b1b2b55;margin:12px 0}
 #chatbox{position:fixed;right:10px;bottom:10px;width:min(340px,94vw);z-index:30;margin:0}
 #chatlog{height:110px;overflow-y:auto;font-size:.85rem;background:#0b1b2b55;border-radius:10px;padding:6px}
 #unread{background:var(--bad);border-radius:10px;padding:0 6px;font-size:.7rem;margin-left:4px}
-#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);border:3px solid var(--acc);padding:8px 16px;border-radius:20px;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center;z-index:50;font-weight:700}#toast.show{opacity:1}
+#toast{position:fixed;bottom:130px;left:50%;transform:translateX(-50%);background:var(--ink);border:3px solid var(--acc);padding:8px 16px;border-radius:20px;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center;z-index:50;font-weight:700}#toast.show{opacity:1}
 table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:2px solid #0b1b2b55;text-align:center;font-size:.85rem}
 #endTitle{text-align:center;font-family:'Bangers',Impact,sans-serif;letter-spacing:.08em;font-size:3rem;margin:4px 0 10px;font-weight:400;text-shadow:3px 3px 0 var(--ink);animation:bob 1.6s ease-in-out infinite}
 .conf{position:fixed;top:-40px;font-size:1.7rem;animation:fall 3.2s linear forwards;z-index:60;pointer-events:none}
@@ -131,9 +131,20 @@ header button{min-height:38px}main{padding:8px}
   #tri{width:72px;height:72px}#btimer{font-size:1.3rem}#fire{width:92px;font-size:.78rem;padding:8px 2px}#turnLabel{max-width:96px;font-size:.85rem}
 }
 @media (max-width:430px){h1{font-size:1rem;letter-spacing:.03em}header{padding:5px 8px}header button.sm{padding:3px 8px;min-width:34px}#voiceInd{display:none}}
+
+/* ===== NARRADOR / ANIMADOR ===== */
+#narr{position:fixed;left:8px;bottom:8px;width:min(450px,calc(100vw - 16px));z-index:25;display:flex;gap:10px;align-items:center;background:var(--ink);border:3px solid var(--acc);border-radius:20px;padding:8px 14px 8px 8px;box-shadow:0 5px 0 #000a;opacity:0;transform:translateY(24px) scale(.96);transition:opacity .3s,transform .35s cubic-bezier(.3,1.6,.5,1);pointer-events:none}
+#narr.show{opacity:1;transform:none}
+#narrAv{flex:none;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe27a,#ff9f1a);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 3px 0 #000a}
+#narrAv.talk{animation:nTalk .4s infinite}@keyframes nTalk{50%{transform:scale(1.14) rotate(-8deg)}}
+#narrBody{min-width:0}
+#narrLab{font-family:'Bangers',Impact,sans-serif;letter-spacing:.1em;color:var(--acc);font-size:.85rem;margin-bottom:1px}
+#narrTxt{font-size:.92rem;line-height:1.25;color:#fff;font-weight:600}
+#narrB{visibility:hidden}
+@media (max-height:500px) and (orientation:landscape){#narr{width:min(380px,50vw);padding:4px 10px 4px 5px}#narrAv{width:34px;height:34px;font-size:1.1rem}#narrTxt{font-size:.78rem}#narrLab{font-size:.7rem}}
 </style></head><body>
 <div id="bg"></div>
-<header><h1>⚓ BATALLA NAVAL</h1><div class="hbtns"><span id="voiceInd"></span><button id="mic" class="sm hidden" title="Activar/desactivar micrófono">🎙️</button><button id="chatBtn" class="sm hidden">💬<span id="unread" class="hidden"></span></button><button id="mute" class="sm">🔊</button> <button id="leave" class="sm hidden">Salir</button></div></header>
+<header><h1>⚓ BATALLA NAVAL</h1><div class="hbtns"><span id="voiceInd"></span><button id="narrBtn" class="sm hidden" title="Narrador: voz y texto / solo texto / apagado">🎤</button><button id="mic" class="sm hidden" title="Activar/desactivar micrófono">🎙️</button><button id="chatBtn" class="sm hidden">💬<span id="unread" class="hidden"></span></button><button id="mute" class="sm">🔊</button> <button id="leave" class="sm hidden">Salir</button></div></header>
 <main>
 <section id="home" class="screen card">
   <div class="homeLogo"><div class="big">⚓</div><h2>BATALLA NAVAL</h2><div class="muted">Online · 1 vs 1</div></div>
@@ -182,6 +193,7 @@ header button{min-height:38px}main{padding:8px}
 </main>
 <div id="chatbox" class="card hidden"><div id="chatlog"></div>
   <div class="row"><select id="scope"><option value="room">Sala</option><option value="team">Equipo</option></select><input id="chatIn" placeholder="Mensaje…" maxlength="200"><button id="send" class="sm">➤</button></div></div>
+<div id="narr"><div id="narrAv">🎙️</div><div id="narrBody"><div id="narrLab"></div><div id="narrTxt"><span id="narrA"></span><span id="narrB"></span></div></div></div>
 <div id="toast"></div>
 
 <script>
@@ -493,7 +505,7 @@ function show(id) {
   ['home', 'lobby', 'place', 'battle', 'end'].forEach(s => $(s).classList.toggle('hidden', s !== id));
   const home = id === 'home';
   if (home) $('chatbox').classList.add('hidden');
-  $('chatBtn').classList.toggle('hidden', home); $('leave').classList.toggle('hidden', home); $('mic').classList.toggle('hidden', home);
+  $('chatBtn').classList.toggle('hidden', home); $('leave').classList.toggle('hidden', home); $('mic').classList.toggle('hidden', home); $('narrBtn').classList.toggle('hidden', home);
 }
 const peerOk = async () => { if (await window.__peerReady && window.Peer) return true; toast('No se pudo cargar PeerJS (revisa tu internet)'); return false; };
 
@@ -628,8 +640,9 @@ function goHome() {
 $('leave').onclick = () => { socket.emit('room:leave'); goHome(); };
 if (sessionStorage.role === 'guest' && sessionStorage.code) { (async () => { if (await peerOk()) onLost(); })(); } else { sessionStorage.removeItem('code'); sessionStorage.removeItem('role'); }
 
-socket.on('state', st => { S = st; endsAt = Date.now() + st.endsIn; onState(); last = st.phase; });
+socket.on('state', st => { S = st; endsAt = Date.now() + st.endsIn; onState(); try { narrateState(last); } catch (e) { console.error(e); } last = st.phase; });
 socket.on('chat', m => {
+  if (m.sys) { try { narrSys(m.text); } catch (e) { console.error(e); } }
   const d = document.createElement('div');
   d.innerHTML = m.sys ? '<i class="muted">' + m.text + '</i>' : '<b style="color:' + m.color + '">' + m.from + (m.team ? ' (equipo)' : '') + ':</b> ' + m.text;
   $('chatlog').appendChild(d); $('chatlog').scrollTop = 1e6;
@@ -875,6 +888,7 @@ $('ec').onpointermove = e => { if (selDrag) pickCell(e); };
 $('ec').onpointerup = $('ec').onpointercancel = () => { selDrag = false; };
 $('fire').onclick = () => { if (!sel) return; const d = { target, x: sel.x, y: sel.y }; sel = null; socket.emit('game:fire', d, cbErr); };
 socket.on('game:event', ev => {
+  try { narrateShot(ev); } catch (e) { console.error(e); }
   if (!S) return; const txt = { water: 'Agua 💧', hit: '¡Impacto! 💥', sunk: '¡Hundido ' + ev.ship + '! 🔥' }[ev.result], DUR = 780;
   const d = document.createElement('div'); d.textContent = pname(ev.by) + ' → ' + pname(ev.target) + ' ' + coord(ev.x, ev.y) + ': ' + txt; $('log').prepend(d);
   const id = ev.target === pid ? 'oc' : (ev.target === target ? 'ec' : null), mineShot = ev.by === pid;
@@ -895,5 +909,184 @@ function renderEnd() {
     S.players.map(p => '<tr><td>' + p.name + (S.mvps && S.mvps[p.team] === p.pid ? ' ⭐MVP' : '') + '</td><td>' + p.team + '</td><td>' + p.stats.shots + '</td><td>' + p.stats.hits + '</td><td>' + p.stats.sunk + '</td><td>' + (p.stats.shots ? Math.round(100 * p.stats.hits / p.stats.shots) : 0) + '%</td></tr>').join('') + '</table>';
 }
 $('rematch').onclick = () => socket.emit('room:rematch');
+</script>
+<script>
+// =====================================================================
+// 🎙️ NARRADOR / ANIMADOR: cuenta la partida como una historia
+//   - Voz (speechSynthesis del navegador) + burbuja de texto animada
+//   - Botón 🎤 en la cabecera: voz+texto → solo texto → apagado
+//   - Todo se calcula en el cliente a partir del estado y los disparos,
+//     así cada jugador escucha su propia narración (no gasta red extra).
+// =====================================================================
+const NR = { q: [], cur: null, mode: localStorage.narr, lab: 'Preparativos', lobbyN: 0, placedSet: new Set(), hideT: 0, typeT: 0, fb: 0, m: null, voice: null, lastLine: {} };
+const HASTTS = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+if (!['voice', 'text', 'off'].includes(NR.mode)) NR.mode = HASTTS ? 'voice' : 'text';
+if (!HASTTS && NR.mode === 'voice') NR.mode = 'text';
+const NICON = { voice: '🎤', text: '📝', off: '🚫' }, NTXT = { voice: 'Narrador: voz y texto', text: 'Narrador: solo texto', off: 'Narrador apagado' };
+$('narrBtn').textContent = NICON[NR.mode];
+const NLAB = ['', 'Capítulo I: Primeros disparos', 'Capítulo II: Fuego cruzado', 'Capítulo final: El desenlace'];
+const rp = (k, arr) => { let i; do { i = Math.floor(Math.random() * arr.length); } while (arr.length > 1 && i === NR.lastLine[k]); NR.lastLine[k] = i; return arr[i]; };
+const spk = (x, y) => String.fromCharCode(65 + x) + ' ' + (y + 1);
+
+// --- voz ---
+function loadVoice() {
+  if (!HASTTS) return; let best = null, bs = -1;
+  speechSynthesis.getVoices().filter(v => /^es/i.test(v.lang)).forEach(v => {
+    let s = 0; if (/es[-_](MX|US|419|PE|AR|CO|CL)/i.test(v.lang)) s += 3; else if (/es[-_]ES/i.test(v.lang)) s += 1;
+    if (/Google|Natural|Online|Neural|Premium|Enhanced/i.test(v.name)) s += 2; if (s > bs) { bs = s; best = v; }
+  });
+  NR.voice = best;
+}
+if (HASTTS) { loadVoice(); speechSynthesis.onvoiceschanged = loadVoice; }
+document.addEventListener('pointerdown', () => { if (!HASTTS) return; try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) { } }, { once: true });
+
+// --- cola de narración ---
+function nsay(text, pr, delay, lab) {
+  if (NR.mode === 'off' || !text) return;
+  NR.q.push({ text, pr: pr || 2, at: Date.now() + (delay || 0), lab: lab || NR.lab });
+  while (NR.q.length > 3) { let i = NR.q.findIndex(x => x.pr < 3); if (i < 0) i = 0; NR.q.splice(i, 1); }
+}
+function nstop() {
+  clearTimeout(NR.fb); clearInterval(NR.typeT); NR.cur = null; $('narrAv').classList.remove('talk');
+  if (HASTTS) { try { speechSynthesis.cancel(); } catch (e) { } }
+}
+function setTxt(full, n) { $('narrA').textContent = full.slice(0, n); $('narrB').textContent = full.slice(n); }
+function nplay(h) {
+  NR.cur = h; clearTimeout(NR.hideT); clearTimeout(NR.fb); clearInterval(NR.typeT);
+  $('narrLab').textContent = '📖 ' + h.lab; $('narr').classList.add('show'); $('narrAv').classList.add('talk');
+  const L = h.text.length, voice = NR.mode === 'voice' && !muted && HASTTS; let i = 0; setTxt(h.text, 0);
+  NR.typeT = setInterval(() => { i++; setTxt(h.text, i); if (i >= L) clearInterval(NR.typeT); }, voice ? 62 : 45);
+  const fin = () => {
+    if (NR.cur !== h) return; clearTimeout(NR.fb); clearInterval(NR.typeT); setTxt(h.text, L); NR.cur = null; $('narrAv').classList.remove('talk');
+    NR.hideT = setTimeout(() => { if (!NR.cur) $('narr').classList.remove('show'); }, 7000);
+  };
+  if (voice) {
+    const u = new SpeechSynthesisUtterance(h.text), big = h.pr >= 3;
+    u.lang = NR.voice ? NR.voice.lang : 'es-MX'; if (NR.voice) u.voice = NR.voice; u.rate = big ? 1.12 : 1.06; u.pitch = big ? 1.25 : 1.12; u.volume = 1;
+    u.onend = u.onerror = () => setTimeout(fin, 200);
+    setTimeout(() => { if (NR.cur === h) { try { speechSynthesis.speak(u); } catch (e) { } } }, 60);
+    NR.fb = setTimeout(fin, L * 110 + 4000);
+  } else NR.fb = setTimeout(fin, L * 55 + 2200);
+}
+setInterval(() => {
+  if (!S) { if (NR.q.length || NR.cur) { NR.q = []; nstop(); } $('narr').classList.remove('show'); NR.lobbyN = 0; return; }
+  const now = Date.now(); NR.q = NR.q.filter(x => x.pr >= 3 || now < x.at + 10000);
+  if (!NR.q.length) return; const h = NR.q[0]; if (now < h.at) return;
+  if (NR.cur) { if (h.pr >= 3 && NR.cur.pr < 3) nstop(); else return; }
+  NR.q.shift(); nplay(h);
+}, 120);
+
+$('narrBtn').onclick = () => {
+  const modes = HASTTS ? ['voice', 'text', 'off'] : ['text', 'off'];
+  NR.mode = modes[(modes.indexOf(NR.mode) + 1) % modes.length]; localStorage.narr = NR.mode;
+  $('narrBtn').textContent = NICON[NR.mode]; toast(NTXT[NR.mode]);
+  if (NR.mode === 'off') { NR.q = []; nstop(); $('narr').classList.remove('show'); }
+  else if (HASTTS && NR.mode === 'text') { try { speechSynthesis.cancel(); } catch (e) { } }
+};
+$('mute').addEventListener('click', () => { if (muted && HASTTS) { try { speechSynthesis.cancel(); } catch (e) { } } });
+
+// --- memoria de la historia ---
+const nfresh = () => ({ shots: 0, streakH: {}, streakM: {}, lost: {}, sunkAll: 0, chap: 1, lastTurn: null, lastRep: 0, warned: false });
+
+function turnLine(t) {
+  const m = NR.m, A = pname(t), mine = t === pid, ch = m.chap, lost = m.lost[t];
+  if (lost && Math.random() < .35) return mine ? `¡${A}, es tu turno! Acuérdate de tu ${lost} hundido... ¡cóbrate la revancha!` : `Turno de ${A}, que viene con sed de venganza por su ${lost} hundido.`;
+  if (mine) {
+    if (ch === 3) return rp('tm3', [`¡${A}, es tu turno! Esto se decide ahora. ¡Que no te tiemble el pulso!`, `¡Capitán ${A}, el desenlace está en tus manos! ¡Apunta con cabeza fría!`]);
+    return rp('tm', [`¡${A}, es tu turno! Elige bien tu casilla.`, `¡Capitán ${A}, el cañón es tuyo! ¡Apunta!`, `¡Tu turno, ${A}! El mar espera tu jugada.`, `¡Adelante, ${A}! Es tu turno de hacer historia.`]);
+  }
+  if (ch === 1) return rp('t1', [`Es el turno de ${A}. ¡Que comience el tanteo!`, `Ahora le toca a ${A}. Un disparo al azar puede cambiarlo todo.`, `${A} toma los controles del cañón.`, `¡Atención! Dispara ${A}. Los peces ya hicieron sus apuestas.`]);
+  if (ch === 2) return rp('t2', [`¡Turno de ${A}! La tensión se corta con cuchillo.`, `${A} afila la mira. ¿Dónde estará escondida la flota rival?`, `Le toca a ${A}, ¡y el mar contiene la respiración!`, `¡Es el turno de ${A}! Cada disparo cuenta ahora.`]);
+  return rp('t3', [`¡Turno de ${A}! Esto es a vida o muerte.`, `${A} tiene el cañón en sus manos. ¡Nadie parpadea!`, `Le toca a ${A}. ¡El final está cerca!`]);
+}
+
+function narrateState(prev) {
+  const me = meP(); if (!me || NR.mode === 'off') return; const ph = S.phase;
+  if (ph === 'lobby') {
+    NR.lab = 'Preparativos'; const n = S.players.length;
+    if (prev === 'ended') nsay(rp('rev', ['¡Revancha! El mar pide otra ronda. Pulsen listo cuando estén preparados.', '¡Otra vez al agua! Dicen que la revancha es la mejor parte de la historia.']), 3);
+    else if (n !== NR.lobbyN) {
+      if (n === 1 && NR.lobbyN === 0) nsay(`Bienvenido a bordo, ${S.players[0].name}. Tu sala tiene el código ${S.code.split('').join(', ')}. Pásaselo a tu rival y que empiece la aventura.`, 3);
+      else if (n === 2 && NR.lobbyN < 2) nsay(`¡Ya están los dos contendientes! ${S.players[0].name} y ${S.players[1].name} se miran con desconfianza. Pulsen listo, y que comience el espectáculo.`, 3);
+    }
+    NR.lobbyN = n;
+  } else if (ph === 'placing') {
+    NR.lab = 'Prólogo: La flota zarpa';
+    if (prev !== 'placing') { NR.placedSet = new Set(); nsay(`Capitanes, ¡a sus puestos! Tienen ${C.PLACEMENT_SECONDS} segundos para esconder su flota en el mapa. Arrastren los barcos y piensen como piratas.`, 3); }
+    S.players.forEach(p => { if (p.placed && !NR.placedSet.has(p.pid)) { NR.placedSet.add(p.pid); if (p.pid !== pid && !me.placed) nsay(`${p.name} ya escondió su flota. ¡Apúrate, capitán, que el tiempo corre!`, 1); } });
+  } else if (ph === 'playing') {
+    if (prev === 'placing' || !NR.m) {
+      NR.m = nfresh(); NR.lab = NLAB[1];
+      if (prev === 'placing') {
+        const A = S.players[0].name, B = S.players[1] ? S.players[1].name : 'su rival', n = S.size;
+        nsay(rp('intro', [
+          `Damas y caballeros, bienvenidos a la batalla naval más épica del océano. En una esquina de este mapa de ${n} por ${n}, el capitán ${A}. En la otra, el temible ${B}. ¡Que el mar decida el resto!`,
+          `La niebla cae sobre las aguas. Dos flotas, dos capitanes, ${A} contra ${B}, y un solo sobreviviente. Esta es una historia de pólvora, nervios y mucha espuma. ¡Comienza la batalla!`,
+          `¡Atención, marineros! Hoy el océano es testigo de un duelo legendario: ${A} contra ${B}. Los cañones están cargados y los tiburones, hambrientos. ¡Que empiece la historia!`]), 3);
+      }
+    }
+    const m = NR.m, t = S.turn;
+    if (t && t !== m.lastTurn) { m.lastTurn = t; m.lastRep = S.repeat; m.warned = false; nsay(turnLine(t), 2, 900); }
+    else if (t && t === m.lastTurn && S.repeat < m.lastRep) {
+      m.lastRep = S.repeat; m.warned = false; const A = pname(t);
+      nsay(rp('bon', [`¡Y como acertó, ${A} dispara OTRA VEZ!`, `¡Impacto con premio! ${A} tiene un segundo disparo.`, `${A} sigue con la mano caliente. ¡Otro disparo!`]), 2, 900);
+    }
+  } else if (ph === 'ended' && prev !== 'ended') {
+    NR.lab = 'Epílogo';
+    const W = S.players.find(p => p.team === S.winner), L = S.players.find(p => p.team !== S.winner);
+    if (!W || !L) { nsay('La niebla lo cubre todo y nadie ganó. Una historia sin final.', 3); return; }
+    if (L.abandoned) nsay(`¡Increíble! ${L.name} abandonó el barco y ${W.name} gana sin disparar el último cañonazo. Victoria por abandono.`, 3);
+    else {
+      const acc = W.stats.shots ? Math.round(100 * W.stats.hits / W.stats.shots) : 0;
+      nsay(`¡Se acabó, damas y caballeros! ${W.name} hunde la flota de ${L.name} y se corona capitán del océano. ${W.stats.sunk} barcos hundidos y ${acc} por ciento de precisión. ¡Qué espectáculo!`, 3);
+    }
+    nsay(rp('epi', [`Así termina esta historia de pólvora y espuma. ${L.name}, el mar siempre da revancha.`, `El océano guarda silencio y los tiburones aplauden. Gracias por navegar con nosotros. ¿Revancha?`, `Fin del relato. ${W.name} entra a la leyenda, y ${L.name} ya planea su venganza.`]), 3);
+  }
+}
+
+function narrateShot(ev) {
+  if (!S || S.phase !== 'playing' || !NR.m || NR.mode === 'off') return;
+  const m = NR.m, A = pname(ev.by), B = pname(ev.target), c = spk(ev.x, ev.y), r = ev.result, tp = S.players.find(p => p.pid === ev.target);
+  m.shots++; let txt, pr = 2;
+  if (r === 'water') {
+    m.streakH[ev.by] = 0; const n = m.streakM[ev.by] = (m.streakM[ev.by] || 0) + 1; pr = 1;
+    txt = n >= 3 ? rp('mS', [`¡${n} fallos seguidos de ${A}! Los tiburones ya le piden autógrafos.`, `${A} lleva ${n} disparos al agua. ¿Estará apuntando con los ojos cerrados?`])
+      : rp('m', [`${A} dispara a ${c}... ¡solo agua! Los peces agradecen el baño.`, `Plof. ${c} era mar abierto. ${B} respira aliviado.`, `¡Agua! ${A} falló en ${c}, y ${B} se seca el sudor.`, `Nada en ${c}. Una ballena observa confundida a ${A}.`]);
+  } else {
+    m.streakM[ev.by] = 0; const n = m.streakH[ev.by] = (m.streakH[ev.by] || 0) + 1;
+    if (r === 'sunk') {
+      pr = 3; m.sunkAll++; m.lost[ev.target] = ev.ship; const left = Math.max(0, (tp ? tp.left : 1) - 1), first = m.sunkAll === 1;
+      const tail = left === 0 ? ` ¡Era el último barco de ${B}!` : left === 1 ? ` Y a ${B} solo le queda UN barco. ¡Está al borde del abismo!` : ` A ${B} todavía le quedan ${left} barcos.`;
+      txt = (first ? `¡Primer barco caído de la batalla! ` : '') + rp('s', [`¡HUNDIDO! El ${ev.ship} de ${B} se va al fondo del mar. ¡Glub, glub!`, `¡Se hunde el ${ev.ship}! ${A} lo mandó a visitar a los cangrejos.`, `¡Adiós, ${ev.ship}! ${A} dispara en ${c} y ${B} solo puede mirar.`]) + tail;
+    } else {
+      const firstBlood = !m.sunkAll && Object.values(m.streakH).reduce((a, b) => a + b, 0) === 1 && m.shots <= 40 && !m.hitSeen; m.hitSeen = true;
+      txt = firstBlood ? `¡PRIMERA SANGRE de la partida! ${A} impacta en ${c} y ${B} ya tiene un barco herido.`
+        : n >= 2 ? rp('hS', [`¡${n} aciertos seguidos! ${A} está encendido, ¡${B} tiembla!`, `¡Otra vez! ${A} no perdona, ¡${n} impactos al hilo!`])
+        : rp('h', [`¡BOOM! ${A} acierta en ${c}. ¡${B} tiene humo en cubierta!`, `¡Impacto directo en ${c}! ${A} huele a pólvora.`, `¡Tocado! El casco de ${B} cruje en ${c}.`, `¡Ouch! ${A} le encontró el punto débil a ${B} en ${c}.`]);
+    }
+  }
+  nsay(txt, pr, 820);
+  // cambio de capítulo
+  const lefts = S.players.map(p => p.pid === ev.target && r === 'sunk' ? p.left - 1 : p.left), mn = Math.min(...lefts);
+  const nc = mn <= 2 ? 3 : (m.shots >= 10 ? 2 : 1);
+  if (nc > m.chap && mn > 0) {
+    m.chap = nc; NR.lab = NLAB[nc];
+    nsay(nc === 2 ? 'Capítulo dos: la niebla se disipa y la batalla se pone seria. Ya nadie dispara por probar.' : 'Capítulo final: alguien está al borde del abismo. ¡El desenlace se acerca!', 3, 820);
+  }
+}
+
+function narrSys(t) {
+  if (!S || NR.mode === 'off') return; let r;
+  if ((r = /^⏱ (.+) perdió su turno$/.exec(t))) nsay(rp('to', [`¡El reloj no perdona! ${r[1]} se quedó dormido y pierde su turno.`, `¡Tiempo! ${r[1]} dudó demasiado y el turno se le fue como agua entre los dedos.`]), 2);
+  else if ((r = /^⚠ (.+) se desconectó/.exec(t))) nsay(`¡Ay no! ${r[1]} se desconectó en pleno combate. ¿Volverá a tiempo?`, 2);
+  else if ((r = /^(.+) volvió a la partida$/.exec(t))) nsay(`¡Regresó ${r[1]}! La batalla continúa.`, 2);
+  else if ((r = /^(.+) abandonó la partida$/.exec(t))) nsay(`${r[1]} ha abandonado el barco. ¡Eso no se ve todos los días!`, 2);
+}
+
+// aviso de poco tiempo
+setInterval(() => {
+  if (!S || S.phase !== 'playing' || !NR.m || !S.turn) return; const s = (endsAt - Date.now()) / 1000;
+  if (s > 0 && s <= 8 && !NR.m.warned) { NR.m.warned = true; const A = pname(S.turn); nsay(rp('time', [`¡Tic, tac! A ${A} se le acaba el tiempo.`, `¡El reloj corre, ${A}! ¡Dispara ya!`, `¡Ocho segundos, ${A}! ¡Decídete!`]), 1); }
+}, 400);
 </script>
 </body></html>
