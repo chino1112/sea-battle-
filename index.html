@@ -101,6 +101,36 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:2px so
   .pm,.pips,.pst span{display:none}.half{padding-top:24px;gap:4px}
   #tri{width:88px;height:88px}#btimer{font-size:1.5rem}#log{height:30px;margin-top:4px}#arena{grid-template-columns:1fr 112px 1fr}#fire{width:108px}
 }
+
+/* ===== ajustes: tablero grande, perfiles compactos, cómodo en móvil ===== */
+header button{min-height:38px}main{padding:8px}
+.half{padding:26px 8px 8px;gap:6px}.tag{font-size:.9rem;padding:1px 14px}
+.profile{gap:8px}.pn{font-size:1rem}.pm,.pst{display:none}.pip{width:12px;height:7px}
+#arena{grid-template-columns:1fr 116px 1fr;gap:6px}
+#tri{width:88px;height:88px}#btimer{font-size:1.7rem}#fire{width:112px;font-size:.9rem;padding:10px 4px}#turnLabel{max-width:112px;font-size:1rem}
+@media (min-width:900px) and (min-height:640px){.pm,.pst{display:flex}.half{padding-top:30px}#arena{grid-template-columns:1fr 136px 1fr}#tri{width:114px;height:114px}#btimer{font-size:2rem}#fire{width:132px;font-size:1rem}#turnLabel{max-width:132px}}
+@media (orientation:portrait){
+  main{padding:6px}#arena{grid-template-columns:1fr;gap:10px}
+  #mid{position:sticky;top:62px;z-index:15;flex-direction:row;gap:10px;padding:6px 12px;background:#0b1b2bee;border:3px solid var(--acc);border-radius:20px;box-shadow:0 5px 0 var(--ink)}
+  #tri{width:58px;height:58px}#btimer{font-size:1.25rem}
+  #fire{width:auto;flex:1;max-width:none;padding:12px 8px;font-size:1.05rem}
+  #turnLabel{max-width:110px;font-size:.95rem}.half{padding:26px 6px 8px}
+}
+
+#log:empty,#enemies:empty{display:none}
+@media (max-width:600px){h1{font-size:1.25rem;white-space:nowrap}header{padding:6px 10px}.hbtns{gap:4px}}
+@media (orientation:portrait){#mid{top:52px}}
+@media (max-height:500px) and (orientation:landscape){
+  header{padding:3px 10px}header button{min-height:32px;padding:3px 10px}h1{font-size:1.1rem}main{padding:5px 8px}
+  #log{display:none}
+  #arena{grid-template-columns:1fr 96px 1fr;gap:4px}
+  .half{flex-direction:row;align-items:flex-start;justify-content:center;padding:22px 6px 6px;gap:6px}
+  .tag{font-size:.8rem;padding:0 12px}
+  .profile{flex-direction:column;width:62px;flex:none;gap:4px;text-align:center}
+  .pinfo{width:100%}.pn{font-size:.78rem}.pn small,.pn .bad{display:none}.pips{justify-content:center;gap:2px}.pip{width:9px;height:6px}
+  #tri{width:72px;height:72px}#btimer{font-size:1.3rem}#fire{width:92px;font-size:.78rem;padding:8px 2px}#turnLabel{max-width:96px;font-size:.85rem}
+}
+@media (max-width:430px){h1{font-size:1rem;letter-spacing:.03em}header{padding:5px 8px}header button.sm{padding:3px 8px;min-width:34px}#voiceInd{display:none}}
 </style></head><body>
 <div id="bg"></div>
 <header><h1>⚓ BATALLA NAVAL</h1><div class="hbtns"><span id="voiceInd"></span><button id="mic" class="sm hidden" title="Activar/desactivar micrófono">🎙️</button><button id="chatBtn" class="sm hidden">💬<span id="unread" class="hidden"></span></button><button id="mute" class="sm">🔊</button> <button id="leave" class="sm hidden">Salir</button></div></header>
@@ -651,15 +681,20 @@ $('copy').onclick = () => { $('link').select(); try { navigator.clipboard.writeT
 
 // ===== dibujo estilo caricatura =====
 const INK = '#0b1b2b';
+function geo(cv) { const W = cv.width / DPR, cs = W / (S.size + .6); return { W, cs, m: cs * .6, B: cs * S.size }; }
 function fit(cv, px) {
-  if (px == null) px = Math.min(cv.parentElement.clientWidth - 12, 560, innerHeight - 250);
-  px = Math.floor(px / S.size) * S.size; if (px < 50) return false;
+  if (px == null) px = Math.min(cv.parentElement.clientWidth - 30, 560, innerHeight - 230);
+  px = Math.floor(px); if (px < 80) return false;
   const w = px * DPR; if (cv.width !== w) { cv.width = cv.height = w; cv.style.width = cv.style.height = px + 'px'; } return true;
 }
 function battlePx() {
-  const aw = $('arena').clientWidth, port = matchMedia('(orientation:portrait)').matches;
-  if (port) return Math.max(120, Math.min(aw - 36, (innerHeight - 340) / 2, 480));
-  return Math.max(120, Math.min((aw - 152) / 2 - 28, innerHeight - 235, 560));
+  const arena = $('arena'), aw = arena.clientWidth, port = matchMedia('(orientation:portrait)').matches;
+  if (port) return Math.max(160, Math.min(aw - 28, 600));
+  const midW = ($('mid').offsetWidth || 112) + 12, wAvail = (aw - midW) / 2 - 24;
+  const top = arena.getBoundingClientRect().top, lg = $('log').offsetHeight + ($('log').offsetHeight ? 10 : 0);
+  if (getComputedStyle($('halfE')).flexDirection === 'row') return Math.max(140, Math.min(wAvail - $('profE').offsetWidth - 6, innerHeight - top - lg - 8 - 44, 680));
+  const prof = Math.max($('profE').offsetHeight, $('profM').offsetHeight), en = $('enemies').offsetHeight;
+  return Math.max(140, Math.min(wAvail, innerHeight - top - lg - 8 - prof - en - 56, 680));
 }
 const SHIPCOL = { carrier: '#7fa6cf', battleship: '#98a6b5', cruiser: '#ee5a52', destroyer: '#f6b13d', submarine: '#f7d84a', heliship: '#5fcf7a' };
 function drawShip(g, s, cs, o) {
@@ -705,24 +740,27 @@ function mark(g, r, x, y, cs, t, id) {
 }
 const isPend = (id, x, y) => pend[id + ':' + x + ',' + y] > NOW;
 function drawBoard(cv, t, o) {
-  NOW = t; const id = cv.id, g = cv.getContext('2d'), n = S.size, W = cv.width / DPR, cs = W / n;
+  NOW = t; const id = cv.id, g = cv.getContext('2d'), n = S.size, { W, cs, m, B } = geo(cv);
   g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, W);
-  const gr = g.createLinearGradient(0, 0, 0, W); gr.addColorStop(0, '#46cdf0'); gr.addColorStop(1, '#1b8fd0'); g.fillStyle = gr; g.fillRect(0, 0, W, W);
+  g.fillStyle = '#0f3a5c'; g.fillRect(0, 0, W, W);
+  g.fillStyle = '#fff'; g.font = '700 ' + Math.max(10, cs * .44) + 'px Fredoka,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) { g.fillText(String.fromCharCode(65 + i), m + (i + .5) * cs, m * .52); g.fillText(i + 1, m * .5, m + (i + .5) * cs); }
+  g.save(); g.translate(m, m);
+  const gr = g.createLinearGradient(0, 0, 0, B); gr.addColorStop(0, '#46cdf0'); gr.addColorStop(1, '#1b8fd0'); g.fillStyle = gr; g.fillRect(0, 0, B, B);
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if ((x + y) & 1) { g.fillStyle = 'rgba(255,255,255,.07)'; g.fillRect(x * cs, y * cs, cs, cs); }
   g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 2; g.lineCap = 'round';
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const px = x * cs + cs * .18, py = y * cs + cs * (.34 + ((x * 5 + y * 3) % 3) * .14), ph = t / 700 + x + y * 1.7;
     g.beginPath(); g.moveTo(px, py + Math.sin(ph) * 1.5); g.quadraticCurveTo(px + cs * .16, py - cs * .09 + Math.sin(ph) * 1.5, px + cs * .32, py + Math.sin(ph + 1) * 1.5); g.stroke(); }
-  g.lineCap = 'butt'; g.strokeStyle = 'rgba(255,255,255,.28)'; g.lineWidth = 1;
-  for (let i = 0; i <= n; i++) { g.beginPath(); g.moveTo(i * cs, 0); g.lineTo(i * cs, W); g.moveTo(0, i * cs); g.lineTo(W, i * cs); g.stroke(); }
-  g.fillStyle = 'rgba(11,27,43,.75)'; g.font = '700 ' + Math.max(8, cs * .3) + 'px Fredoka,sans-serif'; g.textAlign = 'left'; g.textBaseline = 'top';
-  for (let i = 0; i < n; i++) { g.fillText(String.fromCharCode(65 + i), i * cs + 3, 2); if (i) g.fillText(i + 1, 3, i * cs + 2); }
+  g.lineCap = 'butt'; g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1;
+  for (let i = 0; i <= n; i++) { g.beginPath(); g.moveTo(i * cs, 0); g.lineTo(i * cs, B); g.moveTo(0, i * cs); g.lineTo(B, i * cs); g.stroke(); }
   (o.ships || []).forEach((s, i) => drawShip(g, s, cs, Object.assign({ bob: o.bob }, (i === selShip && o.editing) ? { col: '#ffd23f', edge: '#ff8a00' } : {})));
   (o.sunk || []).forEach(s => { const c = s.cells; if (c.some(k => isPend(id, k.x, k.y))) return; drawShip(g, { type: s.type, x: c[0].x, y: c[0].y, size: c.length, h: c.length < 2 || c[0].y === c[1].y }, cs, { sunk: true }); });
   (o.shots || []).forEach(s => { if (!isPend(id, s.x, s.y)) mark(g, s.r, s.x, s.y, cs, t, id); });
   if (o.sel) { const k = 1 + Math.sin(t / 150) * .07, cx = (o.sel.x + .5) * cs, cy = (o.sel.y + .5) * cs, r = cs * .5 * k; g.strokeStyle = '#fff'; g.lineWidth = 5; g.strokeRect(o.sel.x * cs + 2, o.sel.y * cs + 2, cs - 4, cs - 4); g.strokeStyle = '#ff4d4f'; g.lineWidth = 3; g.strokeRect(o.sel.x * cs + 2, o.sel.y * cs + 2, cs - 4, cs - 4);
     g.beginPath(); g.arc(cx, cy, r * .55, 0, 6.283); g.moveTo(cx - r, cy); g.lineTo(cx + r, cy); g.moveTo(cx, cy - r); g.lineTo(cx, cy + r); g.stroke(); }
   if (o.ghost) drawShip(g, o.ghost.s, cs, { col: o.ghost.ok ? '#2ecc71' : '#e74c3c', a: .75 });
-  drawFX(g, id, t);
+  drawFX(g, id, t); g.restore();
+  g.strokeStyle = INK; g.lineWidth = 3; g.strokeRect(m, m, B, B);
 }
 // ---- efectos: proyectil, explosión, chispas, humo, salpicadura, textos ----
 function drawFX(g, id, t) {
@@ -746,7 +784,7 @@ function drawFX(g, id, t) {
 }
 function add(o) { if (E.length < 500) E.push(o); }
 function impact(id, x, y, res) {
-  const cv = $(id); if (!cv || !S) return; const cs = cv.width / DPR / S.size, cx = (x + .5) * cs, cy = (y + .5) * cs, t = performance.now();
+  const cv = $(id); if (!cv || !S) return; const cs = geo(cv).cs, cx = (x + .5) * cs, cy = (y + .5) * cs, t = performance.now();
   if (res === 'water') {
     add({ id, t0: t, k: 'col', dur: 750, x: cx, y: cy + cs * .3, w: cs * .55, h: cs * 1.3 });
     add({ id, t0: t, k: 'ring', dur: 700, x: cx, y: cy, r0: cs * .1, r1: cs * .95, col: '255,255,255', lw: 4 }); add({ id, t0: t + 150, k: 'ring', dur: 800, x: cx, y: cy, r0: cs * .1, r1: cs * 1.2, col: '200,240,255', lw: 3 });
@@ -778,7 +816,7 @@ function loop(t) {
 requestAnimationFrame(loop);
 
 // colocación
-const cellAt = (cv, e) => { const r = cv.getBoundingClientRect(), k = cv.width / r.width, cs = cv.width / S.size; return { x: Math.floor((e.clientX - r.left) * k / cs), y: Math.floor((e.clientY - r.top) * k / cs) }; };
+const cellAt = (cv, e) => { const r = cv.getBoundingClientRect(), k = cv.width / DPR / r.width, G = geo(cv); return { x: Math.floor(((e.clientX - r.left) * k - G.m) / G.cs), y: Math.floor(((e.clientY - r.top) * k - G.m) / G.cs) }; };
 function fits(s, idx) {
   const occ = new Set(); myShips.forEach((o, i) => { if (i !== idx) R.cellsOf(o).forEach(c => occ.add(c.x + ',' + c.y)); });
   return R.cellsOf(s).every(c => c.x >= 0 && c.y >= 0 && c.x < S.size && c.y < S.size && !occ.has(c.x + ',' + c.y));
@@ -805,7 +843,7 @@ window.pick = id => { target = id; sel = null; renderBattle(); };
 function profile(p, isMe) {
   const acc = p.stats.shots ? Math.round(100 * p.stats.hits / p.stats.shots) : 0, total = R.fleetList().length; let pips = '';
   for (let i = 0; i < total; i++) pips += '<i class="pip' + (i < p.left ? '' : ' dead') + '"></i>';
-  return crest(p.color, p.name, 46) + '<div class="pinfo"><div class="pn">' + p.name + (isMe ? ' <small>(tú)</small>' : '') + (p.pid === S.host ? ' 👑' : '') + (p.connected ? '' : ' <small class="bad">⚠ desconectado</small>') +
+  return crest(p.color, p.name, 34) + '<div class="pinfo"><div class="pn">' + p.name + (isMe ? ' <small>(tú)</small>' : '') + (p.pid === S.host ? ' 👑' : '') + (p.connected ? '' : ' <small class="bad">⚠ desconectado</small>') +
     '</div><div class="pm"><span class="chip">Equipo ' + p.team + '</span><span class="chip">🗺 Mapa ' + S.size + '×' + S.size + '</span></div><div class="pips">' + pips + '</div></div>' +
     '<div class="pst"><div><b>' + p.left + '</b><span>barcos</span></div><div><b>' + acc + '%</b><span>precisión</span></div><div><b>' + p.stats.sunk + '</b><span>hundidos</span></div></div>';
 }
@@ -826,11 +864,15 @@ function renderBattle() {
   if (mine && !renderBattle.was) { sonar(); lastTick = -1; } renderBattle.was = mine;
   if (!hinted && innerWidth < 700 && matchMedia('(orientation:portrait)').matches) { hinted = true; toast('📱 Gira tu teléfono en horizontal para ver mejor la batalla'); }
 }
-$('ec').onpointerdown = e => {
+let selDrag = false;
+function pickCell(e) {
   const tp = S.players.find(p => p.pid === target), c = cellAt($('ec'), e);
   if (!tp || c.x < 0 || c.y < 0 || c.x >= S.size || c.y >= S.size || tp.shots.some(s => s.x === c.x && s.y === c.y)) return;
-  sel = c; snd('click'); renderBattle();
-};
+  if (sel && sel.x === c.x && sel.y === c.y) return; sel = c; snd('click'); renderBattle();
+}
+$('ec').onpointerdown = e => { selDrag = true; try { $('ec').setPointerCapture(e.pointerId); } catch (_) { } pickCell(e); };
+$('ec').onpointermove = e => { if (selDrag) pickCell(e); };
+$('ec').onpointerup = $('ec').onpointercancel = () => { selDrag = false; };
 $('fire').onclick = () => { if (!sel) return; const d = { target, x: sel.x, y: sel.y }; sel = null; socket.emit('game:fire', d, cbErr); };
 socket.on('game:event', ev => {
   if (!S) return; const txt = { water: 'Agua 💧', hit: '¡Impacto! 💥', sunk: '¡Hundido ' + ev.ship + '! 🔥' }[ev.result], DUR = 780;
@@ -838,7 +880,7 @@ socket.on('game:event', ev => {
   const id = ev.target === pid ? 'oc' : (ev.target === target ? 'ec' : null), mineShot = ev.by === pid;
   cannon(mineShot ? 1 : .75); setTimeout(() => whistle(.62), 140);
   if (id) {
-    const cv = $(id), W = cv.width / DPR, cs = W / S.size; pend[id + ':' + ev.x + ',' + ev.y] = performance.now() + DUR;
+    const cv = $(id), G = geo(cv), W = G.B, cs = G.cs; pend[id + ':' + ev.x + ',' + ev.y] = performance.now() + DUR;
     add({ id, t0: performance.now(), k: 'shell', dur: DUR, sx: id === 'oc' ? -cs : W + cs, sy: W * .95, tx: (ev.x + .5) * cs, ty: (ev.y + .5) * cs, h: W * .55, r: Math.max(5, cs * .2) });
     setTimeout(() => { impact(id, ev.x, ev.y, ev.result); snd(ev.result); }, DUR);
   } else setTimeout(() => snd(ev.result), DUR);
